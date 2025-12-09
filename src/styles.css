@@ -561,12 +561,13 @@ body {
    ============================================ */
 .slider-row {
   display: flex;
-  align-items: center;
-  gap: var(--space-md);
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0;
 }
 
 .slider-row input[type="range"] {
-  flex: 1;
+  width: 100%;
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
@@ -587,11 +588,11 @@ body {
 }
 
 .slider-row span {
-  min-width: 50px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--accent-primary);
   text-align: right;
+  align-self: flex-end;
 }
 
 /* ============================================
@@ -1291,5 +1292,113 @@ body {
   .coming-soon {
     font-size: 6px;
     padding: 1px 3px;
+  }
+}
+
+/* ============================================
+   PORTRAIT WARNING
+   ============================================ */
+.portrait-warning {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: var(--bg-deep);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.warning-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--text-primary);
+}
+
+.warning-content .material-icons {
+  font-size: 48px;
+  color: var(--accent-active);
+  animation: rotate-icon 2s infinite ease-in-out;
+}
+
+.warning-content h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  margin: 0;
+  letter-spacing: 0.1em;
+}
+
+.warning-content p {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+@keyframes rotate-icon {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-90deg);
+  }
+
+  75% {
+    transform: rotate(-90deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .portrait-warning {
+    display: flex;
+  }
+}
+
+/* ============================================
+   LANDSCAPE MOBILE OPTIMIZATION
+   ============================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --header-height: 32px;
+    --space-md: 8px;
+    --space-lg: 10px;
+  }
+
+  .hud-header {
+    padding: 2px var(--space-md);
+  }
+
+  .hud-panel {
+    top: calc(var(--header-height) + 4px);
+    max-height: calc(100vh - var(--header-height) - 8px);
+  }
+
+  .panel-header {
+    padding: 4px 8px;
+  }
+
+  .control-section {
+    padding: 8px;
+  }
+
+  .hud-value {
+    font-size: 12px;
+  }
+
+  /* Compact buttons for short screens */
+  .btn {
+    min-height: 24px;
+    font-size: 9px;
   }
 }
