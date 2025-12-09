@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test output
+coverage/
+html/
+.nyc_output/
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache
+.cache/
+.parcel-cache/
+.vite/
+working_design_ref/
+working_design_ref.md

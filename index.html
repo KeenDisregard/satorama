@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SATORAMA // ORBITAL TRACKING</title>
+  <link rel="stylesheet" href="/src/styles.css">
+
+  <!-- Typography: Inter (UI), JetBrains Mono (Data), Oswald (Headers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Oswald:wght@500;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- TELEMETRY BAR (Top) -->
+  <header class="hud-header">
+    <div class="hud-group">
+      <div class="hud-label">SIM TIME</div>
+      <div class="hud-value monospace" id="simulation-clock">INIT...</div>
+    </div>
+    <div class="hud-separator"></div>
+    <div class="hud-group">
+      <div class="hud-label">FPS</div>
+      <div class="hud-value monospace" id="fps">0</div>
+    </div>
+    <div class="hud-separator"></div>
+    <div class="hud-group">
+      <div class="hud-label">SATS</div>
+      <div class="hud-value monospace" id="satellite-count">0</div>
+    </div>
+    <div class="hud-separator"></div>
+    <div class="hud-group">
+      <div class="hud-label">GND</div>
+      <div class="hud-value monospace" id="groundstation-count">0</div>
+    </div>
+  </header>
+
+  <!-- ANALYSIS PANEL (Left) -->
+  <aside id="info" class="hud-panel hud-left">
+    <div class="panel-header">
+      <span class="material-icons">radar</span>
+      <span>OBJECT ANALYSIS</span>
+    </div>
+
+    <div id="selected-info" class="panel-content">
+      <div class="no-selection">
+        <span class="material-icons">touch_app</span>
+        <p>SELECT TARGET</p>
+      </div>
+    </div>
+
+    <div id="follow-controls" class="panel-actions" style="display: none;">
+      <button id="toggle-follow" class="btn btn-primary">
+        <span class="material-icons">videocam</span> TRACK
+      </button>
+      <button id="reset-camera" class="btn">
+        <span class="material-icons">center_focus_strong</span> RESET
+      </button>
+      <button id="deselect-object" class="btn btn-danger">
+        <span class="material-icons">close</span> CLEAR
+      </button>
+    </div>
+
+    <div id="selected-object-controls" class="panel-section" style="display: none;">
+      <div class="section-label">VISUALIZATION</div>
+      <label class="toggle-row disabled">
+        <span>Orbital Trail <span class="coming-soon">SOON</span></span>
+        <input type="checkbox" id="toggle-trail" disabled>
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle-row disabled">
+        <span>Ground Track <span class="coming-soon">SOON</span></span>
+        <input type="checkbox" id="toggle-ground-track" disabled>
+        <span class="toggle-switch"></span>
+      </label>
+    </div>
+  </aside>
+
+  <!-- CONTROL DECK (Right) -->
+  <aside id="controls" class="hud-panel hud-right">
+
+    <!-- Time Control -->
+    <section class="control-section">
+      <div class="panel-header">
+        <span class="material-icons">schedule</span>
+        <span>TIME CONTROL</span>
+      </div>
+
+      <div class="time-controls">
+        <button id="time-play-pause" class="btn btn-icon-lg" title="Play/Pause">
+          <span class="material-icons">pause</span>
+        </button>
+        <button id="time-reset" class="btn btn-icon" title="Reset to Now">
+          <span class="material-icons">replay</span>
+        </button>
+        <div class="time-readout">
+          <div class="hud-label">WARP</div>
+          <div id="time-speed-display" class="hud-value monospace">1x</div>
+        </div>
+      </div>
+
+      <div class="speed-grid">
+        <button class="time-speed-btn" data-speed="-10">-10x</button>
+        <button class="time-speed-btn" data-speed="-1">-1x</button>
+        <button class="time-speed-btn active" data-speed="1">1x</button>
+        <button class="time-speed-btn" data-speed="10">10x</button>
+        <button class="time-speed-btn" data-speed="100">100x</button>
+        <button class="time-speed-btn" data-speed="1000">MAX</button>
+      </div>
+    </section>
+
+    <!-- Layer Toggles -->
+    <section class="control-section">
+      <div class="section-label">DATA LAYERS</div>
+      <div class="toggle-grid">
+        <label class="toggle-box">
+          <input type="checkbox" id="toggle-satellites" checked>
+          <div class="box-content">
+            <span class="material-icons">satellite_alt</span>
+            <span>SATS</span>
+          </div>
+        </label>
+        <label class="toggle-box disabled">
+          <input type="checkbox" id="toggle-orbits" disabled>
+          <div class="box-content">
+            <span class="material-icons">all_out</span>
+            <span>ORBITS <span class="coming-soon">SOON</span></span>
+          </div>
+        </label>
+        <label class="toggle-box">
+          <input type="checkbox" id="toggle-groundstations" checked>
+          <div class="box-content">
+            <span class="material-icons">cell_tower</span>
+            <span>GND</span>
+          </div>
+        </label>
+        <label class="toggle-box disabled">
+          <input type="checkbox" id="toggle-los" disabled>
+          <div class="box-content">
+            <span class="material-icons">settings_ethernet</span>
+            <span>LOS <span class="coming-soon">SOON</span></span>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- Orbit Filters -->
+    <section class="control-section">
+      <div class="section-label">ORBIT CLASS</div>
+      <div class="filter-list">
+        <label class="filter-row">
+          <input type="checkbox" class="satellite-type" data-type="LEO" checked>
+          <span class="check-mark"></span>
+          <span class="color-tag" style="--tag-color: #00ffff;"></span>
+          <span>LEO</span>
+        </label>
+        <label class="filter-row">
+          <input type="checkbox" class="satellite-type" data-type="MEO" checked>
+          <span class="check-mark"></span>
+          <span class="color-tag" style="--tag-color: #ffff00;"></span>
+          <span>MEO</span>
+        </label>
+        <label class="filter-row">
+          <input type="checkbox" class="satellite-type" data-type="GEO" checked>
+          <span class="check-mark"></span>
+          <span class="color-tag" style="--tag-color: #ff00ff;"></span>
+          <span>GEO</span>
+        </label>
+        <label class="filter-row">
+          <input type="checkbox" class="satellite-type" data-type="HEO" checked>
+          <span class="check-mark"></span>
+          <span class="color-tag" style="--tag-color: #ff4444;"></span>
+          <span>HEO</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Constellation Density -->
+    <section class="control-section">
+      <div class="section-label">DENSITY</div>
+      <div class="slider-row">
+        <input type="range" id="satellite-slider" min="0" max="1000" step="50" value="100">
+        <span id="satellite-slider-value" class="monospace">100</span>
+      </div>
+    </section>
+
+    <!-- Search -->
+    <section class="control-section">
+      <button id="search-toggle" class="btn btn-block">
+        <span class="material-icons">search</span> SEARCH DATABASE
+      </button>
+    </section>
+
+    <!-- Add Custom TLE -->
+    <section class="control-section">
+      <button id="add-tle-toggle" class="btn btn-block btn-primary">
+        <span class="material-icons">add_circle</span> ADD TLE
+      </button>
+    </section>
+  </aside>
+
+  <!-- ADD TLE MODAL -->
+  <div id="tle-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="panel-header">
+          <span class="material-icons">satellite_alt</span>
+          <span>ADD CUSTOM TLE</span>
+        </div>
+        <button id="tle-modal-close" class="btn btn-icon modal-close">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">SATELLITE NAME</label>
+          <input type="text" id="tle-name" class="form-input" placeholder="e.g., ISS (ZARYA)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">TLE LINE 1</label>
+          <input type="text" id="tle-line1" class="form-input monospace" placeholder="1 25544U 98067A...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">TLE LINE 2</label>
+          <input type="text" id="tle-line2" class="form-input monospace" placeholder="2 25544  51.6416...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">OR PASTE FULL TLE (3 LINES)</label>
+          <textarea id="tle-full" class="form-textarea monospace" rows="4"
+            placeholder="ISS (ZARYA)&#10;1 25544U 98067A   24341.50000000...&#10;2 25544  51.6416 247.4627..."></textarea>
+        </div>
+        <div id="tle-error" class="form-error"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="tle-cancel" class="btn">CANCEL</button>
+        <button id="tle-submit" class="btn btn-primary">ADD SATELLITE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH OVERLAY -->
+  <div id="search-sidebar" class="search-overlay">
+    <div class="overlay-header">
+      <div class="panel-header">
+        <span class="material-icons">manage_search</span>
+        <span>SYSTEM SEARCH</span>
+      </div>
+    </div>
+    <div class="overlay-content">
+      <select id="search-type" class="hud-select">
+        <option value="all">ALL OBJECTS</option>
+        <option value="satellite">SATELLITES</option>
+        <option value="groundstation">GROUND STATIONS</option>
+      </select>
+      <div class="search-field">
+        <span class="material-icons">search</span>
+        <input type="text" id="search-input" placeholder="ENTER DESIGNATOR...">
+      </div>
+      <div class="search-meta">
+        RESULTS: <span id="results-count" class="monospace">0</span>
+      </div>
+      <div id="search-results" class="results-list"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/index.js"></script>
+</body>
+
+</html>
