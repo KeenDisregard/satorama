@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/satorama/',  // GitHub Pages serves from repo name path
   server: {
     open: true,
     port: 3000
