@@ -12,6 +12,7 @@ import Tooltip from './components/tooltip.js';
 import SatelliteTrail from './components/satellite-trail.js';
 import GroundTrack from './components/ground-track.js';
 import { generateTLE } from './data/tle-generator.js';
+import { loadPreset as loadPresetData, getPresetList, getCatalogTimestamp } from './data/tle-presets.js';
 import * as satellite from 'satellite.js';
 
 class App {
@@ -260,6 +261,86 @@ class App {
 
     // Update satellite count in UI
     document.getElementById('satellite-count').textContent = this.satellites.length;
+  }
+
+  /**
+   * Load a preset group of real satellites from the bundled catalog
+   * @param {string} presetId - Preset ID (e.g., 'iss', 'gps', 'starlink')
+   * @returns {boolean} Success status
+   */
+  loadPreset(presetId) {
+    try {
+      const tleData = loadPresetData(presetId);
+
+      if (!tleData || tleData.length === 0) {
+        console.warn(`Preset '${presetId}' has no satellites`);
+        return false;
+      }
+
+      // Clear existing satellites
+      if (this.satelliteManager) {
+        this.satelliteManager.clear();
+      }
+      this.satellites = [];
+
+      // Initialize the instanced mesh for this count
+      this.satelliteManager.initialize(tleData.length);
+
+      // Create satellite objects from preset TLE data
+      for (let i = 0; i < tleData.length; i++) {
+        try {
+          const satrec = satellite.twoline2satrec(tleData[i].tle1, tleData[i].tle2);
+
+          const mm = satrec.no;
+          const period = (2 * Math.PI) / mm;
+          const mmRadPerSec = mm / 60;
+          const mu = 398600.4418;
+          const a = Math.pow(mu / (mmRadPerSec * mmRadPerSec), 1 / 3);
+          const altitude = a - 6378.137;
+
+          const orbitParams = {
+            period: period,
+            inclination: satrec.inclo * 180 / Math.PI,
+            eccentricity: satrec.ecco,
+            altitude: altitude
+          };
+
+          const sat = this.satelliteManager.addSatellite(tleData[i], i, satrec, orbitParams);
+          this.satellites.push(sat);
+        } catch (e) {
+          console.warn(`Failed to create satellite ${i} from preset:`, e);
+        }
+      }
+
+      // Initialize SGP4 worker with new TLE data
+      this.initSGP4Worker(tleData);
+
+      // Update UI
+      document.getElementById('satellite-count').textContent = this.satellites.length;
+
+      console.log(`Loaded preset '${presetId}' with ${this.satellites.length} satellites`);
+      return true;
+
+    } catch (error) {
+      console.error(`Failed to load preset '${presetId}':`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Get list of available presets
+   * @returns {Array<{id: string, name: string, count: number}>}
+   */
+  getAvailablePresets() {
+    return getPresetList();
+  }
+
+  /**
+   * Get timestamp of when the TLE catalog was generated
+   * @returns {string} ISO timestamp
+   */
+  getCatalogDate() {
+    return getCatalogTimestamp();
   }
 
   initSGP4Worker(tleData) {
