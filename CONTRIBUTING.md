@@ -179,7 +179,7 @@ Use GitHub Issues with the provided templates. Include:
 
 ## 💡 Feature Requests
 
-We welcome ideas! Check the [ROADMAP.md](ROADMAP.md) first to see if it's already planned, then open an issue using the Feature Request template.
+We welcome ideas! Check the [OUTSTANDING.md](OUTSTANDING.md) first to see if it's already planned, then open an issue using the Feature Request template.
 
 ---
 

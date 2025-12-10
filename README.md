@@ -204,7 +204,7 @@ npm run test:run      # Single run
 npm run test:coverage # With coverage report
 ```
 
-Tests cover `TimeController`, `CameraController`, and `SearchManager`. See [ROADMAP.md](ROADMAP.md) for planned domain logic coverage.
+Tests cover `TimeController`, `CameraController`, and `SearchManager`. See [OUTSTANDING.md](OUTSTANDING.md) for planned domain logic coverage.
 
 ---
 
@@ -249,13 +249,13 @@ Tests cover `TimeController`, `CameraController`, and `SearchManager`. See [ROAD
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Outstanding Work
 
-See [ROADMAP.md](ROADMAP.md) for planned improvements including:
+See [OUTSTANDING.md](OUTSTANDING.md) for planned improvements including:
 - Domain logic test coverage
 - Real TLE data import (CelesTrak/Space-Track)
-- Historical time picker
-- Mobile touch controls
+- Orbit visualization enhancements
+- Performance optimizations
 
 ---
 
