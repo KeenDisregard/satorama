@@ -391,6 +391,8 @@ self.onmessage = function (e) {
 
     case 'setSGP4Priority':
       // Set which satellite should use full SGP4 propagation (-1 for none)
+      // Note: Position jump on selection is due to divergence between Keplerian and SGP4
+      // over time (TLE age). This is expected behavior and not a bug.
       sgp4PriorityIndex = data.index;
       break;
 

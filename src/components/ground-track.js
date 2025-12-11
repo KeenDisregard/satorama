@@ -7,30 +7,37 @@ import * as satellite from 'satellite.js';
  * Handles dateline crossing by breaking into segments
  */
 class GroundTrack {
-  constructor(scene, earthRadius) {
+  constructor(scene, earthRadius, earthMesh = null) {
     this.scene = scene;
     this.earthRadius = earthRadius;
+    this.earthMesh = earthMesh; // Reference to Earth mesh for rotation
     this.target = null;
-    this.visible = true;
-    
+    this.visible = false; // Default OFF to match UI toggle state
+
     // Track groups
     this.groundTrack = new THREE.Group(); // Past track
     this.futureTrack = new THREE.Group(); // Future track
     this.positionMarker = null;
-    
+
     // Track appearance
     this.pastColor = 0x00ff00;
     this.futureColor = 0x00ff00;
     this.trackHeight = 50; // Height above Earth surface
-    
+
     // Throttling - SGP4 is expensive, only recalculate periodically
     this.lastUpdateTime = 0;
     this.updateInterval = 500; // Only recalculate every 500ms
     this.lastSimTime = 0; // Track sim time to detect jumps
-    
-    // Add groups to scene
-    this.scene.add(this.groundTrack);
-    this.scene.add(this.futureTrack);
+
+    // Add groups as children of Earth mesh so they rotate with it
+    // If no earthMesh provided, fall back to adding to scene
+    if (this.earthMesh) {
+      this.earthMesh.add(this.groundTrack);
+      this.earthMesh.add(this.futureTrack);
+    } else {
+      this.scene.add(this.groundTrack);
+      this.scene.add(this.futureTrack);
+    }
   }
 
   /**
@@ -40,7 +47,7 @@ class GroundTrack {
   setTarget(sat) {
     this.clearTrack();
     this.target = sat;
-    
+
     if (sat) {
       this.createPositionMarker();
     }
@@ -60,7 +67,7 @@ class GroundTrack {
       transparent: true,
       opacity: 0.8
     });
-    
+
     this.positionMarker = new THREE.Mesh(geometry, material);
     this.positionMarker.visible = this.visible;
     this.scene.add(this.positionMarker);
@@ -75,7 +82,7 @@ class GroundTrack {
   eciToLatLon(positionEci, date) {
     const gmst = satellite.gstime(date);
     const geodetic = satellite.eciToGeodetic(positionEci, gmst);
-    
+
     return {
       lat: satellite.degreesLat(geodetic.latitude),
       lon: satellite.degreesLong(geodetic.longitude)
@@ -91,13 +98,13 @@ class GroundTrack {
   latLonToVector3(lat, lon) {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lon + 180) * (Math.PI / 180);
-    
+
     const radius = this.earthRadius + this.trackHeight;
-    
+
     const x = -radius * Math.sin(phi) * Math.cos(theta);
     const y = radius * Math.cos(phi);
     const z = radius * Math.sin(phi) * Math.sin(theta);
-    
+
     return new THREE.Vector3(x, y, z);
   }
 
@@ -112,17 +119,17 @@ class GroundTrack {
     const now = performance.now();
     const simTimeMs = simulationTime.getTime();
     const simTimeDelta = Math.abs(simTimeMs - this.lastSimTime);
-    
+
     // Only update if: enough real time passed OR large sim time jump (time warp/reset)
-    const needsUpdate = (now - this.lastUpdateTime >= this.updateInterval) || 
-                        (simTimeDelta > 60000); // >1 min sim time jump
-    
+    const needsUpdate = (now - this.lastUpdateTime >= this.updateInterval) ||
+      (simTimeDelta > 60000); // >1 min sim time jump
+
     if (!needsUpdate) {
       // Just update position marker (cheap)
       this.updateMarkerOnly(simulationTime);
       return;
     }
-    
+
     this.lastUpdateTime = now;
     this.lastSimTime = simTimeMs;
 
@@ -131,7 +138,7 @@ class GroundTrack {
 
     const pastPoints = [];
     const futurePoints = [];
-    
+
     // Calculate past track using adaptive sampling
     const pastPoints45 = this.sampleTrackAdaptive(simulationTime, -45 * 60 * 1000, 0);
     pastPoints.push(...pastPoints45);
@@ -156,11 +163,11 @@ class GroundTrack {
    */
   updateMarkerOnly(simulationTime) {
     if (!this.positionMarker || !this.target) return;
-    
+
     // Use satellite's current mesh position projected to ground
     const satPos = this.target.mesh.position;
     if (!satPos) return;
-    
+
     // Quick projection: normalize to earth surface
     const dist = satPos.length();
     if (dist > 0) {
@@ -204,7 +211,7 @@ class GroundTrack {
 
       const latLon = this.eciToLatLon(positionAndVelocity.position, time);
       const position = this.latLonToVector3(latLon.lat, latLon.lon);
-      
+
       // Calculate velocity magnitude (km/s)
       const vel = positionAndVelocity.velocity;
       const velocity = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
@@ -225,47 +232,47 @@ class GroundTrack {
    */
   sampleTrackAdaptive(baseTime, startOffsetMs, endOffsetMs) {
     const points = [];
-    
+
     // Target arc length between samples (km) - balances detail vs. performance
     const targetArcLength = 100; // km
-    
+
     // Min/max time step bounds
     const minDtMs = 10 * 1000;   // 10 seconds minimum
     const maxDtMs = 120 * 1000;  // 2 minutes maximum
-    
+
     // Maximum points to prevent runaway
     const maxPoints = 200;
-    
+
     const direction = startOffsetMs < endOffsetMs ? 1 : -1;
     let currentOffsetMs = startOffsetMs;
-    
+
     while ((direction > 0 && currentOffsetMs <= endOffsetMs) ||
-           (direction < 0 && currentOffsetMs >= endOffsetMs)) {
-      
+      (direction < 0 && currentOffsetMs >= endOffsetMs)) {
+
       if (points.length >= maxPoints) break;
-      
+
       const time = new Date(baseTime.getTime() + currentOffsetMs);
       const point = this.getGroundPointWithVelocity(time);
-      
+
       if (point) {
         points.push({ position: point.position, lat: point.lat, lon: point.lon });
-        
+
         // Calculate adaptive time step based on velocity
         // dt = targetArcLength / velocity
         // velocity is in km/s, we want dt in ms
         const velocity = point.velocity || 7.8; // Default to LEO velocity if unavailable
         let dtMs = (targetArcLength / velocity) * 1000;
-        
+
         // Clamp to bounds
         dtMs = Math.max(minDtMs, Math.min(maxDtMs, dtMs));
-        
+
         currentOffsetMs += direction * dtMs;
       } else {
         // If propagation failed, skip ahead with default step
         currentOffsetMs += direction * 60 * 1000;
       }
     }
-    
+
     // Ensure we have the endpoint
     if (points.length > 0) {
       const endTime = new Date(baseTime.getTime() + endOffsetMs);
@@ -273,13 +280,13 @@ class GroundTrack {
       if (endPoint) {
         const lastPoint = points[points.length - 1];
         // Only add if significantly different from last point
-        if (Math.abs(lastPoint.lon - endPoint.lon) > 0.5 || 
-            Math.abs(lastPoint.lat - endPoint.lat) > 0.5) {
+        if (Math.abs(lastPoint.lon - endPoint.lon) > 0.5 ||
+          Math.abs(lastPoint.lat - endPoint.lat) > 0.5) {
           points.push(endPoint);
         }
       }
     }
-    
+
     return direction > 0 ? points : points.reverse();
   }
 
@@ -303,7 +310,7 @@ class GroundTrack {
       if (i < points.length - 1) {
         const next = points[i + 1];
         const lonDiff = Math.abs(current.lon - next.lon);
-        
+
         if (lonDiff > 180) {
           // Dateline crossing - end current segment and start new one
           this.addLineToGroup(segment, group, color, dashed);
@@ -327,7 +334,7 @@ class GroundTrack {
    */
   addLineToGroup(positions, group, color, dashed) {
     const geometry = new THREE.BufferGeometry().setFromPoints(positions);
-    
+
     let material;
     if (dashed) {
       material = new THREE.LineDashedMaterial({
@@ -346,11 +353,11 @@ class GroundTrack {
     }
 
     const line = new THREE.Line(geometry, material);
-    
+
     if (dashed) {
       line.computeLineDistances();
     }
-    
+
     line.visible = this.visible;
     group.add(line);
   }
@@ -395,7 +402,7 @@ class GroundTrack {
     this.visible = visible;
     this.groundTrack.visible = visible;
     this.futureTrack.visible = visible;
-    
+
     if (this.positionMarker) {
       this.positionMarker.visible = visible;
     }

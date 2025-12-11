@@ -11,15 +11,15 @@ class SatelliteTrail {
     this.trail = null;
     this.trailPoints = [];
     this.maxPoints = 200;
-    this.visible = true;
-    
+    this.visible = false; // Default OFF to match UI toggle state
+
     // Trail appearance
     this.trailColor = new THREE.Color(0x00ffff);
-    
+
     // Throttling
     this.lastUpdateTime = 0;
     this.updateInterval = 50; // Only add points every 50ms
-    
+
     // Track simulation time for discontinuity detection (tab backgrounding)
     this.lastSimTime = null;
   }
@@ -31,7 +31,7 @@ class SatelliteTrail {
   setTarget(satellite) {
     this.clearTrail();
     this.target = satellite;
-    
+
     if (satellite) {
       // Initialize with current position
       this.trailPoints = [];
@@ -96,7 +96,7 @@ class SatelliteTrail {
     // Throttle updates
     const now = performance.now();
     if (now - this.lastUpdateTime < this.updateInterval) return;
-    
+
     // Detect simulation time discontinuity (caused by tab backgrounding)
     // When browser tab is inactive, requestAnimationFrame pauses but simulation time jumps
     // This creates artifacts where trail connects pre/post-background positions with a straight line
@@ -112,7 +112,7 @@ class SatelliteTrail {
       }
     }
     this.lastSimTime = simulationTime ? new Date(simulationTime.getTime()) : null;
-    
+
     this.lastUpdateTime = now;
 
     // Get current satellite position
@@ -146,13 +146,13 @@ class SatelliteTrail {
       geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.maxPoints * 3), 3));
       geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(this.maxPoints * 3), 3));
       geometry.setDrawRange(0, 0);
-      
+
       const material = new THREE.LineBasicMaterial({
         vertexColors: true,
         transparent: true,
         opacity: 0.8
       });
-      
+
       this.trail = new THREE.Line(geometry, material);
       this.scene.add(this.trail);
     }

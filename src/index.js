@@ -125,16 +125,8 @@ function setupEventListeners(app) {
     app.toggleSatellites(e.target.checked);
   });
 
-  document.getElementById('toggle-orbits').addEventListener('change', (e) => {
-    app.toggleOrbits(e.target.checked);
-  });
-
   document.getElementById('toggle-groundstations').addEventListener('change', (e) => {
     app.toggleGroundStations(e.target.checked);
-  });
-
-  document.getElementById('toggle-los').addEventListener('change', (e) => {
-    app.toggleLineOfSight(e.target.checked);
   });
 
   // Trail and ground track toggles
@@ -144,6 +136,15 @@ function setupEventListeners(app) {
 
   document.getElementById('toggle-ground-track').addEventListener('change', (e) => {
     app.toggleGroundTrack(e.target.checked);
+  });
+
+  // Selected satellite specific toggles (in left panel)
+  document.getElementById('toggle-orbit-selected').addEventListener('change', (e) => {
+    app.toggleOrbits(e.target.checked);
+  });
+
+  document.getElementById('toggle-los-selected').addEventListener('change', (e) => {
+    app.toggleLineOfSight(e.target.checked);
   });
 
   // Satellite type filters
@@ -456,8 +457,8 @@ function setupKeyboardShortcuts(app) {
         app.toggleSatellites(satCheckbox.checked);
         break;
 
-      case 'o': // O - Toggle orbits
-        const orbitCheckbox = document.getElementById('toggle-orbits');
+      case 'o': // O - Toggle orbits (for selected satellite)
+        const orbitCheckbox = document.getElementById('toggle-orbit-selected');
         orbitCheckbox.checked = !orbitCheckbox.checked;
         app.toggleOrbits(orbitCheckbox.checked);
         break;
@@ -468,8 +469,8 @@ function setupKeyboardShortcuts(app) {
         app.toggleGroundStations(gsCheckbox.checked);
         break;
 
-      case 'l': // L - Toggle line of sight
-        const losCheckbox = document.getElementById('toggle-los');
+      case 'l': // L - Toggle line of sight (for selected satellite)
+        const losCheckbox = document.getElementById('toggle-los-selected');
         losCheckbox.checked = !losCheckbox.checked;
         app.toggleLineOfSight(losCheckbox.checked);
         break;

@@ -72,6 +72,11 @@
     <div id="selected-object-controls" class="panel-section" style="display: none;">
       <div class="section-label">VISUALIZATION</div>
       <label class="toggle-row">
+        <span>Orbit Line</span>
+        <input type="checkbox" id="toggle-orbit-selected">
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle-row">
         <span>Orbital Trail</span>
         <input type="checkbox" id="toggle-trail">
         <span class="toggle-switch"></span>
@@ -79,6 +84,11 @@
       <label class="toggle-row">
         <span>Ground Track</span>
         <input type="checkbox" id="toggle-ground-track">
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle-row">
+        <span>Line of Sight</span>
+        <input type="checkbox" id="toggle-los-selected">
         <span class="toggle-switch"></span>
       </label>
     </div>
@@ -129,24 +139,10 @@
           </div>
         </label>
         <label class="toggle-box">
-          <input type="checkbox" id="toggle-orbits">
-          <div class="box-content">
-            <span class="material-icons">all_out</span>
-            <span>ORBITS</span>
-          </div>
-        </label>
-        <label class="toggle-box">
           <input type="checkbox" id="toggle-groundstations" checked>
           <div class="box-content">
             <span class="material-icons">cell_tower</span>
             <span>GND</span>
-          </div>
-        </label>
-        <label class="toggle-box">
-          <input type="checkbox" id="toggle-los">
-          <div class="box-content">
-            <span class="material-icons">settings_ethernet</span>
-            <span>LOS</span>
           </div>
         </label>
       </div>

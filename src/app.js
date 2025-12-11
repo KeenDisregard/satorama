@@ -150,7 +150,7 @@ class App {
     // Initialize visualization helpers
     this.tooltip = new Tooltip();
     this.satelliteTrail = new SatelliteTrail(this.scene);
-    this.groundTrack = new GroundTrack(this.scene, this.earth.radius);
+    this.groundTrack = new GroundTrack(this.scene, this.earth.radius, this.earth.mesh);
 
     // Initialize satellite manager for instanced rendering
     this.satelliteManager = new SatelliteManager(this.scene, 50000);
@@ -536,11 +536,12 @@ class App {
     // Always update controls
     this.controls.update();
 
-    // Update line of sight calculations every frame
-    // InstancedMesh rendering is efficient enough for per-frame updates
-    if (this.settings.showLineOfSight) {
-      this.lineOfSight.update(this.groundStations,
-        this.satellites.filter(s => this.isSatelliteVisible(s)));
+    // Update line of sight for selected satellite only (not all satellites)
+    if (this.settings.showLineOfSight && this.selectedObject && this.selectedObject.tleData) {
+      this.lineOfSight.update(this.groundStations, [this.selectedObject]);
+    } else if (this.settings.showLineOfSight) {
+      // Clear LOS lines if no satellite selected
+      this.lineOfSight.update(this.groundStations, []);
     }
 
     // Update selected info panel if a ground station is selected
