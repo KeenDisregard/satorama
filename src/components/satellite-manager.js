@@ -312,8 +312,10 @@ class SatelliteManager {
   /**
    * Create an orbit line for a satellite on-demand (for selected satellite only)
    * This avoids computing 360 SGP4 calls per satellite at startup
+   * @param {Object} sat - Satellite object
+   * @param {Date} simulationTime - Current simulation time (defaults to wall-clock if not provided)
    */
-  createOrbitLine(sat) {
+  createOrbitLine(sat, simulationTime = null) {
     // Remove existing orbit line if any
     if (sat.orbitLine) {
       this.scene.remove(sat.orbitLine);
@@ -324,14 +326,19 @@ class SatelliteManager {
 
     if (!sat.satrec) return null;
 
+    // Use simulation time if provided, otherwise use current wall-clock time
+    const baseDate = simulationTime || new Date();
+
+    // Store the epoch for this orbit line to detect when refresh is needed
+    sat.orbitLineEpoch = baseDate.getTime();
+
     // Generate orbit points (360 points for full orbit)
     const points = [];
-    const date = new Date();
     const periodMs = sat.orbit.period * 60 * 1000; // period in ms
 
     for (let i = 0; i <= 360; i++) {
       const timeOffset = (i / 360) * periodMs;
-      const pointDate = new Date(date.getTime() + timeOffset);
+      const pointDate = new Date(baseDate.getTime() + timeOffset);
 
       try {
         const positionAndVelocity = satellite.propagate(sat.satrec, pointDate);
@@ -361,6 +368,30 @@ class SatelliteManager {
     this.scene.add(sat.orbitLine);
 
     return sat.orbitLine;
+  }
+
+  /**
+   * Update orbit line if simulation time has diverged significantly from when it was created.
+   * This keeps the orbit line in sync with the ground track during time warp.
+   * @param {Object} sat - Satellite object with orbitLine
+   * @param {Date} simulationTime - Current simulation time
+   * @param {number} thresholdMs - Time difference threshold to trigger refresh (default: 5 minutes)
+   * @returns {boolean} - True if orbit was refreshed
+   */
+  updateOrbitLineIfNeeded(sat, simulationTime, thresholdMs = 5 * 60 * 1000) {
+    if (!sat || !sat.orbitLine || !sat.orbitLineEpoch) return false;
+
+    const currentSimMs = simulationTime.getTime();
+    const orbitEpochMs = sat.orbitLineEpoch;
+    const timeDrift = Math.abs(currentSimMs - orbitEpochMs);
+
+    // If the orbit line epoch has drifted more than threshold from current sim time, refresh
+    if (timeDrift > thresholdMs) {
+      this.createOrbitLine(sat, simulationTime);
+      return true;
+    }
+
+    return false;
   }
 
   /**

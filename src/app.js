@@ -555,10 +555,16 @@ class App {
       }
     }
 
-    // Update satellite trail and ground track if a satellite is selected
+    // Update satellite trail, ground track, and orbit line if a satellite is selected
     if (this.selectedObject && this.selectedObject.mesh) {
       this.satelliteTrail.update(this.timeController.current);
       this.groundTrack.update(this.timeController.current);
+
+      // Refresh orbit line if simulation time has drifted significantly from orbit epoch
+      // This keeps orbit line synchronized with ground track during time warp
+      if (this.satelliteManager && this.selectedObject.orbitLine) {
+        this.satelliteManager.updateOrbitLineIfNeeded(this.selectedObject, this.timeController.current);
+      }
     }
 
     // Sync satellite positions to GPU (InstancedMesh)
@@ -820,9 +826,9 @@ class App {
           this.lineOfSight.toggleVisibility(losToggle.checked);
         }
 
-        // Create orbit line for selected satellite
+        // Create orbit line for selected satellite (using simulation time for accuracy)
         if (this.satelliteManager && this.settings.showOrbits && !sat.orbitLine) {
-          this.satelliteManager.createOrbitLine(sat);
+          this.satelliteManager.createOrbitLine(sat, this.timeController.current);
         }
 
         // Show satellite-specific controls
@@ -948,7 +954,7 @@ class App {
     // Create orbit line for selected satellite if it doesn't exist
     if (visible && this.selectedObject && this.selectedObject.tleData && !this.selectedObject.orbitLine) {
       if (this.satelliteManager) {
-        this.satelliteManager.createOrbitLine(this.selectedObject);
+        this.satelliteManager.createOrbitLine(this.selectedObject, this.timeController.current);
       }
     }
 
