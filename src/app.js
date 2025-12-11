@@ -736,6 +736,27 @@ class App {
         this.satelliteTrail.setColorByType(sat.type);
         this.groundTrack.setTarget(sat);
 
+        // Sync visualization states with current UI toggle values
+        // This handles browser auto-restore of checkbox states on refresh
+        const trailToggle = document.getElementById('toggle-trail');
+        const groundTrackToggle = document.getElementById('toggle-ground-track');
+        const orbitToggle = document.getElementById('toggle-orbit-selected');
+        const losToggle = document.getElementById('toggle-los-selected');
+
+        if (trailToggle) {
+          this.satelliteTrail.toggleVisibility(trailToggle.checked);
+        }
+        if (groundTrackToggle) {
+          this.groundTrack.toggleVisibility(groundTrackToggle.checked);
+        }
+        if (orbitToggle && orbitToggle.checked) {
+          this.settings.showOrbits = true;
+        }
+        if (losToggle) {
+          this.settings.showLineOfSight = losToggle.checked;
+          this.lineOfSight.toggleVisibility(losToggle.checked);
+        }
+
         // Create orbit line for selected satellite
         if (this.satelliteManager && this.settings.showOrbits && !sat.orbitLine) {
           this.satelliteManager.createOrbitLine(sat);

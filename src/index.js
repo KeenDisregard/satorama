@@ -155,6 +155,41 @@ function setupEventListeners(app) {
   });
 
   // Note: Follow and reset camera listeners are set up in app.js init()
+
+  // Sync initial app state with toggle values (handles browser auto-restore of form state)
+  syncInitialToggleStates(app);
+}
+
+/**
+ * Sync app settings with current toggle states on page load
+ * Browsers may auto-restore checkbox states from cache, so we need to apply them
+ */
+function syncInitialToggleStates(app) {
+  // Main toggles
+  const satToggle = document.getElementById('toggle-satellites');
+  const gsToggle = document.getElementById('toggle-groundstations');
+
+  if (satToggle) app.settings.showSatellites = satToggle.checked;
+  if (gsToggle) app.settings.showGroundStations = gsToggle.checked;
+
+  // Satellite type filters
+  document.querySelectorAll('.satellite-type').forEach(checkbox => {
+    const type = checkbox.dataset.type;
+    if (type && app.settings.satelliteTypes) {
+      app.settings.satelliteTypes[type] = checkbox.checked;
+    }
+  });
+
+  // Selected satellite toggles - call toggle methods to properly initialize
+  const orbitToggle = document.getElementById('toggle-orbit-selected');
+  const losToggle = document.getElementById('toggle-los-selected');
+
+  if (orbitToggle) {
+    app.settings.showOrbits = orbitToggle.checked;
+  }
+  if (losToggle) {
+    app.toggleLineOfSight(losToggle.checked);
+  }
 }
 
 // Set up search functionality
