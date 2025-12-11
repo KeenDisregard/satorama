@@ -11,6 +11,7 @@ import SearchManager from './components/search-manager.js';
 import Tooltip from './components/tooltip.js';
 import SatelliteTrail from './components/satellite-trail.js';
 import GroundTrack from './components/ground-track.js';
+import Toast from './components/toast.js';
 import { generateTLE } from './data/tle-generator.js';
 import { loadPreset as loadPresetData, getPresetList, getCatalogTimestamp } from './data/tle-presets.js';
 import * as satellite from 'satellite.js';
@@ -149,6 +150,7 @@ class App {
 
     // Initialize visualization helpers
     this.tooltip = new Tooltip();
+    this.toast = new Toast();
     this.satelliteTrail = new SatelliteTrail(this.scene);
     this.groundTrack = new GroundTrack(this.scene, this.earth.radius, this.earth.mesh);
 
@@ -717,19 +719,80 @@ class App {
     const followButton = document.getElementById('toggle-follow');
     const selectedObjectControls = document.getElementById('selected-object-controls');
 
+    // Clear previous selection's orbit line if we're selecting a different satellite
+    if (this._lastSelectedSatellite &&
+      this._lastSelectedSatellite !== this.selectedObject &&
+      this.satelliteManager) {
+      this.satelliteManager.removeOrbitLine(this._lastSelectedSatellite);
+    }
+
     if (this.selectedObject) {
       let html = '';
 
       // Use duck typing: satellites have tleData, ground stations have lat/lon
       if (this.selectedObject.tleData) {
         const sat = this.selectedObject;
+
+        // Calculate TLE age
+        let tleAgeStr = '—';
+        let tleAgeClass = '';
+        let tleAgeDays = 0;
+        if (sat.satrec) {
+          // Convert epoch to Date
+          const epochYear = sat.satrec.epochyr < 57 ? 2000 + sat.satrec.epochyr : 1900 + sat.satrec.epochyr;
+          const epochDate = new Date(epochYear, 0, 1);
+          epochDate.setDate(epochDate.getDate() + sat.satrec.epochdays - 1);
+
+          // Calculate age in days from current sim time
+          const simTime = this.timeController.current;
+          tleAgeDays = Math.floor((simTime - epochDate) / (1000 * 60 * 60 * 24));
+
+          if (tleAgeDays < 0) {
+            tleAgeStr = `${Math.abs(tleAgeDays)}d future`;
+            tleAgeClass = 'tle-warning';
+          } else if (tleAgeDays === 0) {
+            tleAgeStr = 'Today';
+            tleAgeClass = 'tle-good';
+          } else if (tleAgeDays <= 7) {
+            tleAgeStr = `${tleAgeDays}d old`;
+            tleAgeClass = 'tle-good';
+          } else if (tleAgeDays <= 30) {
+            tleAgeStr = `${tleAgeDays}d old`;
+            tleAgeClass = 'tle-warning';
+          } else {
+            tleAgeStr = `${tleAgeDays}d old`;
+            tleAgeClass = 'tle-stale';
+          }
+        }
+
+        // Get eccentricity from satrec
+        const eccentricity = sat.satrec ? sat.satrec.ecco : 0;
+
         html += `<div class="object-name">${sat.tleData.name}</div>`;
         html += `<div class="object-type">Satellite • ${sat.type}</div>`;
+
+        // TLE Health indicator
+        html += `<div class="tle-health ${tleAgeClass}">`;
+        html += `<span class="material-icons" style="font-size: 14px;">schedule</span>`;
+        html += `<span>TLE: ${tleAgeStr}</span>`;
+        html += `</div>`;
+
+        // Orbital parameters
         html += `<div class="spec-grid">`;
         html += `<span class="spec-label">Period</span><span class="spec-value">${sat.orbit.period.toFixed(2)} min</span>`;
-        html += `<span class="spec-label">Altitude</span><span class="spec-value">${sat.orbit.altitude.toFixed(2)} km</span>`;
+        html += `<span class="spec-label">Altitude</span><span class="spec-value">${sat.orbit.altitude.toFixed(0)} km</span>`;
         html += `<span class="spec-label">Inclination</span><span class="spec-value">${sat.orbit.inclination.toFixed(2)}°</span>`;
+        html += `<span class="spec-label">Eccentricity</span><span class="spec-value">${eccentricity.toFixed(4)}</span>`;
         html += `</div>`;
+
+        // Show position jump toast on new satellite selection
+        // The Keplerian→SGP4 propagation switch causes visible position shift
+        if (this._lastSelectedSatellite !== sat) {
+          this.toast.show(
+            `Position adjusted for selection. Switching from fast Keplerian to precise SGP4 propagation.`,
+            { type: 'info', duration: 4000, icon: 'sync_alt' }
+          );
+        }
 
         // Enable trail and ground track for selected satellite
         this.satelliteTrail.setTarget(sat);

@@ -1466,3 +1466,37 @@ body {
     font-size: 9px;
   }
 }
+
+/* ============================================
+   TLE HEALTH INDICATOR
+   ============================================ */
+.tle-health {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  margin: var(--space-sm) 0;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  background: rgba(100, 100, 100, 0.2);
+  color: var(--text-secondary);
+}
+
+.tle-health.tle-good {
+  background: rgba(81, 207, 102, 0.15);
+  color: var(--accent-success);
+  border: 1px solid rgba(81, 207, 102, 0.3);
+}
+
+.tle-health.tle-warning {
+  background: rgba(255, 146, 43, 0.15);
+  color: var(--accent-active);
+  border: 1px solid rgba(255, 146, 43, 0.3);
+}
+
+.tle-health.tle-stale {
+  background: rgba(224, 49, 49, 0.15);
+  color: var(--accent-danger);
+  border: 1px solid rgba(224, 49, 49, 0.3);
+}
