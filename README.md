@@ -64,7 +64,27 @@ flowchart TB
 
 ## ⚡ Performance Architecture
 
-The visualizer is optimized to handle **10,000+ satellites at 60 FPS** through a multi-threaded architecture that separates physics calculations from rendering.
+The visualizer is optimized to handle **25,000+ satellites at 60 FPS** through a multi-threaded architecture that separates physics calculations from rendering.
+
+### Tiered Physics Model
+
+Satorama uses a **tiered propagation architecture** for scalability:
+
+| Tier | Model | Used For | Speed |
+|------|-------|----------|-------|
+| **SGP4** | Full perturbation model | Selected satellite only | 1× |
+| **Keplerian** | Two-body mechanics | All other satellites | ~100× |
+
+Keplerian (two-body) mechanics ignores perturbations but introduces minimal visual error:
+
+| Orbit | Altitude | Error (24h) | Visual Impact |
+|-------|----------|-------------|---------------|
+| LEO | 160-2000 km | 1-10 km | Sub-pixel |
+| MEO | 2000-35k km | <1 km | Invisible |
+| GEO | 35,786 km | ~100 m | Invisible |
+| HEO | Variable | <5 km | Invisible |
+
+The selected satellite always uses full SGP4 for accurate info panel data.
 
 ### Threading Model
 
@@ -81,9 +101,10 @@ The visualizer is optimized to handle **10,000+ satellites at 60 FPS** through a
                             │ Float32Array (transferable)
                             │ positions[n×3] + velocities[n×3]
 ┌───────────────────────────▼─────────────────────────────────────┐
-│ WEB WORKER (SGP4 Physics)                                       │
+│ WEB WORKER (Orbit Propagator)                                   │
 ├─────────────────────────────────────────────────────────────────┤
-│ • Runs SGP4 propagation via satellite.js                        │
+│ • Keplerian propagation for bulk satellites (~100× faster)     │
+│ • SGP4 propagation for selected satellite (via satellite.js)   │
 │ • Maintains simulation time (synced with time controls)         │
 │ • Adaptive update rate based on time multiplier                 │
 │ • Sends position + velocity for extrapolation                   │

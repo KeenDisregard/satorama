@@ -48,7 +48,7 @@ class App {
     // Satellite and ground station data
     this.satellites = [];
     this.groundStations = [];
-    this.satelliteCount = 100;
+    this.satelliteCount = 0;
 
     // Object references
     this.earth = null;
@@ -153,7 +153,7 @@ class App {
     this.groundTrack = new GroundTrack(this.scene, this.earth.radius);
 
     // Initialize satellite manager for instanced rendering
-    this.satelliteManager = new SatelliteManager(this.scene, 10000);
+    this.satelliteManager = new SatelliteManager(this.scene, 50000);
 
     // Generate initial satellite data
     this.generateSatellites(this.satelliteCount);
@@ -352,7 +352,7 @@ class App {
 
     // Create new worker using Vite's worker import pattern
     this.sgp4Worker = new Worker(
-      new URL('./workers/sgp4-worker.js', import.meta.url),
+      new URL('./workers/orbit-propagator.js', import.meta.url),
       { type: 'module' }
     );
 
@@ -366,7 +366,7 @@ class App {
           break;
 
         case 'initialized':
-          console.log(`SGP4 Worker initialized with ${data.count} satellites`);
+          console.log(`Orbit Propagator initialized with ${data.count} satellites`);
           break;
 
         case 'positions':
@@ -629,9 +629,17 @@ class App {
         // Clicking same object deselects it
         this.selectedObject = null;
         this.updateSelectedInfo();
+        // Clear SGP4 priority when deselecting
+        if (this.sgp4Worker) {
+          this.sgp4Worker.postMessage({ type: 'setSGP4Priority', data: { index: -1 } });
+        }
       } else {
         this.selectedObject = newSelection;
         this.updateSelectedInfo();
+        // Set SGP4 priority for selected satellite (for accurate position data)
+        if (this.sgp4Worker && newSelection && newSelection.workerIndex !== undefined) {
+          this.sgp4Worker.postMessage({ type: 'setSGP4Priority', data: { index: newSelection.workerIndex } });
+        }
       }
     }
     // No click-away deselection - require clicking the object again to deselect
@@ -722,14 +730,15 @@ class App {
         html += `<span class="spec-label">Inclination</span><span class="spec-value">${sat.orbit.inclination.toFixed(2)}°</span>`;
         html += `</div>`;
 
-        // DISABLED: Trail, ground track, and orbit line are "coming soon" features
-        // Uncomment for v1.1 when performance optimizations are implemented
-        // this.satelliteTrail.setTarget(sat);
-        // this.satelliteTrail.setColorByType(sat.type);
-        // this.groundTrack.setTarget(sat);
-        // if (this.satelliteManager && !sat.orbitLine) {
-        //   this.satelliteManager.createOrbitLine(sat);
-        // }
+        // Enable trail and ground track for selected satellite
+        this.satelliteTrail.setTarget(sat);
+        this.satelliteTrail.setColorByType(sat.type);
+        this.groundTrack.setTarget(sat);
+
+        // Create orbit line for selected satellite
+        if (this.satelliteManager && this.settings.showOrbits && !sat.orbitLine) {
+          this.satelliteManager.createOrbitLine(sat);
+        }
 
         // Show satellite-specific controls
         selectedObjectControls.style.display = 'block';
@@ -819,6 +828,11 @@ class App {
     this.selectedObject = null;
     this.updateSelectedInfo();
 
+    // Clear SGP4 priority when deselecting
+    if (this.sgp4Worker) {
+      this.sgp4Worker.postMessage({ type: 'setSGP4Priority', data: { index: -1 } });
+    }
+
     // Reset follow button state
     const followButton = document.getElementById('toggle-follow');
     followButton.innerHTML = '<span class="material-icons">videocam</span> TRACK';
@@ -845,6 +859,14 @@ class App {
 
   toggleOrbits(visible) {
     this.settings.showOrbits = visible;
+
+    // Create orbit line for selected satellite if it doesn't exist
+    if (visible && this.selectedObject && this.selectedObject.tleData && !this.selectedObject.orbitLine) {
+      if (this.satelliteManager) {
+        this.satelliteManager.createOrbitLine(this.selectedObject);
+      }
+    }
+
     for (const satellite of this.satellites) {
       if (this.isSatelliteVisible(satellite)) {
         satellite.toggleOrbit(visible);

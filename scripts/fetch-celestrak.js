@@ -62,9 +62,9 @@ const PRESETS = [
     },
     {
         id: 'starlink',
-        name: 'Starlink (Sample)',
+        name: 'Starlink',
         group: 'starlink',
-        maxCount: 1000  // Performance limit
+        // No maxCount - load full constellation
     },
     {
         id: 'oneweb',
@@ -171,8 +171,8 @@ async function main() {
                 filtered = satellites.filter(sat => preset.filter({ OBJECT_NAME: sat.name }));
             }
 
-            // Apply max count limit
-            const limited = filtered.slice(0, preset.maxCount);
+            // Apply max count limit (if specified)
+            const limited = preset.maxCount ? filtered.slice(0, preset.maxCount) : filtered;
 
             catalog.presets[preset.id] = {
                 name: preset.name,

@@ -71,14 +71,14 @@
 
     <div id="selected-object-controls" class="panel-section" style="display: none;">
       <div class="section-label">VISUALIZATION</div>
-      <label class="toggle-row disabled">
-        <span>Orbital Trail <span class="coming-soon">SOON</span></span>
-        <input type="checkbox" id="toggle-trail" disabled>
+      <label class="toggle-row">
+        <span>Orbital Trail</span>
+        <input type="checkbox" id="toggle-trail">
         <span class="toggle-switch"></span>
       </label>
-      <label class="toggle-row disabled">
-        <span>Ground Track <span class="coming-soon">SOON</span></span>
-        <input type="checkbox" id="toggle-ground-track" disabled>
+      <label class="toggle-row">
+        <span>Ground Track</span>
+        <input type="checkbox" id="toggle-ground-track">
         <span class="toggle-switch"></span>
       </label>
     </div>
@@ -128,11 +128,11 @@
             <span>SATS</span>
           </div>
         </label>
-        <label class="toggle-box disabled">
-          <input type="checkbox" id="toggle-orbits" disabled>
+        <label class="toggle-box">
+          <input type="checkbox" id="toggle-orbits">
           <div class="box-content">
             <span class="material-icons">all_out</span>
-            <span>ORBITS <span class="coming-soon">SOON</span></span>
+            <span>ORBITS</span>
           </div>
         </label>
         <label class="toggle-box">
@@ -142,11 +142,11 @@
             <span>GND</span>
           </div>
         </label>
-        <label class="toggle-box disabled">
-          <input type="checkbox" id="toggle-los" disabled>
+        <label class="toggle-box">
+          <input type="checkbox" id="toggle-los">
           <div class="box-content">
             <span class="material-icons">settings_ethernet</span>
-            <span>LOS <span class="coming-soon">SOON</span></span>
+            <span>LOS</span>
           </div>
         </label>
       </div>
@@ -185,10 +185,11 @@
 
     <!-- Constellation Density -->
     <section class="control-section">
-      <div class="section-label">DENSITY</div>
+      <div class="section-label">SYNTHETIC DENSITY</div>
       <div class="slider-row">
-        <input type="range" id="satellite-slider" min="0" max="1000" step="50" value="100">
-        <span id="satellite-slider-value" class="monospace">100</span>
+        <input type="range" id="satellite-slider" min="0" max="50000" step="500" value="0"
+          title="Performance may degrade above 10,000 satellites depending on hardware">
+        <span id="satellite-slider-value" class="monospace">0</span>
       </div>
     </section>
 

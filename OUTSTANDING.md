@@ -1,7 +1,7 @@
 # Outstanding Work
 
 > **Last Updated:** 2025-12-10  
-> **Status:** v1.0 shipped (1,000 satellites max). Items below target v1.1 and v2.0.
+> **Status:** v1.1 shipped (25,000 satellites via Keplerian tier). Items below target v2.0.
 
 ---
 
@@ -11,8 +11,10 @@
 
 The current JavaScript SGP4 architecture hits fundamental limits at ~25,000 objects under high time warp. Rather than optimize for 25k and rebuild again later, v2.0 targets **100,000+ objects** with a tiered physics/rendering architecture.
 
-### Milestone 1: Break the 25k Barrier
-Current bottleneck: JavaScript SGP4 propagation on worker thread cannot keep up with 25k+ satellites at 1000× time warp.
+### Milestone 1: Break the 25k Barrier ✅
+Achieved via Keplerian tier (v1.1): 10k satellites @ 44 FPS, 25k @ 12-18 FPS at 1000× warp.
+
+**100k Stress Test:** Successfully visualized 100,000 satellites at ~7 FPS. Architecture holds, limited by JavaScript/GPU throughput. WebGPU (Tier 2) needed for 100k+ at smooth framerates.
 
 ### Milestone 2: Scale to 100,000+ Objects
 Full v2.0 architecture enabling visualization of the entire tracked orbital catalog.
@@ -21,10 +23,12 @@ Full v2.0 architecture enabling visualization of the entire tracked orbital cata
 
 ## v2.0 Tiered Architecture
 
-### Tier 1: Simplified Keplerian Motion
-- [ ] Use basic Keplerian mechanics (100× faster than SGP4) for bulk satellites
-- [ ] Reserve SGP4 only for selected/tracked satellites needing accuracy
-- [ ] Accuracy loss is imperceptible at visualization scale
+### Tier 1: Simplified Keplerian Motion ✅ COMPLETE
+- [x] Use basic Keplerian mechanics (100× faster than SGP4) for bulk satellites
+- [x] Reserve SGP4 only for selected/tracked satellites needing accuracy
+- [x] Accuracy loss is imperceptible at visualization scale
+
+**Implemented in:** `src/workers/keplerian-propagator.js`, `src/workers/orbit-propagator.js`
 
 ### Tier 2: WebGPU Compute Shaders
 - [ ] Offload propagation to GPU for massive parallelism

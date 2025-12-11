@@ -1,14 +1,23 @@
 /**
- * SGP4 Web Worker
- * Runs satellite propagation off the main thread at a fixed timestep.
+ * Orbit Propagator Web Worker
+ * 
+ * Tiered propagation architecture for scalable satellite visualization:
+ * - Keplerian (two-body) for bulk satellites (~100× faster)
+ * - SGP4 for selected/tracked satellite (full accuracy)
+ * 
  * Sends position data back to main thread for interpolation.
  */
 
 import * as satellite from 'satellite.js';
+import { extractOrbitalElements, propagateKeplerian } from './keplerian-propagator.js';
 
 // Satellite records (parsed TLE data)
 let satellites = [];
 let satrecs = [];
+let orbitalElements = [];  // Keplerian elements for each satellite
+
+// SGP4 priority: index of selected satellite (-1 = none, use Keplerian for all)
+let sgp4PriorityIndex = -1;
 
 // Position and velocity buffers (working buffers, never transferred)
 let positions = null;   // Float32Array [x1, y1, z1, x2, y2, z2, ...]
@@ -38,6 +47,7 @@ let isPaused = false;
 function initSatellites(tleDataArray) {
   satellites = tleDataArray;
   satrecs = [];
+  orbitalElements = [];
 
   for (const tle of tleDataArray) {
     try {
@@ -47,12 +57,15 @@ function initSatellites(tleDataArray) {
         name: tle.name,
         valid: true
       });
+      // Extract Keplerian elements for fast propagation
+      orbitalElements.push(extractOrbitalElements(satrec));
     } catch (e) {
       satrecs.push({
         satrec: null,
         name: tle.name,
         valid: false
       });
+      orbitalElements.push(null);
     }
   }
 
@@ -85,6 +98,7 @@ function initSatellites(tleDataArray) {
  * Add a single satellite to the existing set
  */
 function addSatellite(tleData, expectedIndex) {
+  let newElements = null;
   try {
     const satrec = satellite.twoline2satrec(tleData.tle1, tleData.tle2);
     satrecs.push({
@@ -93,6 +107,8 @@ function addSatellite(tleData, expectedIndex) {
       valid: true
     });
     satellites.push(tleData);
+    // Extract Keplerian elements for fast propagation
+    newElements = extractOrbitalElements(satrec);
   } catch (e) {
     satrecs.push({
       satrec: null,
@@ -101,6 +117,7 @@ function addSatellite(tleData, expectedIndex) {
     });
     satellites.push(tleData);
   }
+  orbitalElements.push(newElements);
 
   // Expand position/velocity buffers
   const newBufferSize = satrecs.length * 3;
@@ -158,11 +175,14 @@ function addSatellite(tleData, expectedIndex) {
 }
 
 /**
- * Propagate all satellites to the given time
+ * Propagate all satellites to the given time using tiered physics:
+ * - SGP4 for the selected/priority satellite (accurate)
+ * - Keplerian for all others (fast, ~100× faster)
  */
 function propagateAll(date) {
   for (let i = 0; i < satrecs.length; i++) {
     const { satrec, valid } = satrecs[i];
+    const elements = orbitalElements[i];
 
     if (!valid || !satrec) {
       // Invalid satellite - set to origin (filtered by main thread)
@@ -173,11 +193,30 @@ function propagateAll(date) {
     }
 
     try {
-      const positionAndVelocity = satellite.propagate(satrec, date);
+      let pos, vel;
 
-      if (positionAndVelocity.position && positionAndVelocity.velocity) {
-        const pos = positionAndVelocity.position;
-        const vel = positionAndVelocity.velocity;
+      if (i === sgp4PriorityIndex) {
+        // Selected satellite: use full SGP4 for accuracy
+        const positionAndVelocity = satellite.propagate(satrec, date);
+        if (positionAndVelocity.position && positionAndVelocity.velocity) {
+          pos = positionAndVelocity.position;
+          vel = positionAndVelocity.velocity;
+        }
+      } else if (elements) {
+        // All other satellites: use fast Keplerian propagation
+        const result = propagateKeplerian(elements, date);
+        pos = result.position;
+        vel = result.velocity;
+      } else {
+        // Fallback to SGP4 if no elements (shouldn't happen)
+        const positionAndVelocity = satellite.propagate(satrec, date);
+        if (positionAndVelocity.position && positionAndVelocity.velocity) {
+          pos = positionAndVelocity.position;
+          vel = positionAndVelocity.velocity;
+        }
+      }
+
+      if (pos && vel) {
         positions[i * 3] = pos.x;
         positions[i * 3 + 1] = pos.y;
         positions[i * 3 + 2] = pos.z;
@@ -348,6 +387,11 @@ self.onmessage = function (e) {
 
     case 'stop':
       stopPhysics();
+      break;
+
+    case 'setSGP4Priority':
+      // Set which satellite should use full SGP4 propagation (-1 for none)
+      sgp4PriorityIndex = data.index;
       break;
 
     case 'addSatellite':

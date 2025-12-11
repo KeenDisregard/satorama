@@ -44,9 +44,6 @@ function setupPresets(app) {
 
     const btn = document.createElement('button');
     btn.className = 'preset-btn';
-    if (preset.count >= 1000) {
-      btn.classList.add('warning');
-    }
 
     // Short display names
     const displayNames = {
