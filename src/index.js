@@ -1,4 +1,5 @@
 import App from './app.js';
+import Walkthrough from './components/walkthrough.js';
 
 // Initialize the application on DOM content loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Set up preset buttons
   setupPresets(app);
+
+  // Set up walkthrough / onboarding tutorial
+  setupWalkthrough();
 });
 
 // Set up preset buttons
@@ -527,4 +531,30 @@ function setupKeyboardShortcuts(app) {
         break;
     }
   });
+}
+
+// Set up walkthrough / onboarding tutorial
+function setupWalkthrough() {
+  const walkthrough = new Walkthrough();
+  const helpBtn = document.getElementById('help-btn');
+
+  // Bind Help button to restart walkthrough
+  if (helpBtn) {
+    helpBtn.addEventListener('click', () => {
+      walkthrough.start();
+    });
+  }
+
+  // Handle window resize for walkthrough positioning
+  window.addEventListener('resize', () => {
+    walkthrough.handleResize();
+  });
+
+  // Auto-start walkthrough for first-time visitors
+  if (!walkthrough.hasSeenWalkthrough()) {
+    // Slight delay to let the app fully initialize
+    setTimeout(() => {
+      walkthrough.start();
+    }, 1000);
+  }
 }
