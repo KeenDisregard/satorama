@@ -66,6 +66,14 @@ function setupPresets(app) {
 
     btn.addEventListener('click', () => {
       app.loadPreset(presetId);
+
+      // Reset synthetic density slider to 0 since presets replace synthetic satellites
+      const slider = document.getElementById('satellite-slider');
+      const sliderValue = document.getElementById('satellite-slider-value');
+      if (slider && sliderValue) {
+        slider.value = 0;
+        sliderValue.textContent = '0';
+      }
     });
 
     presetContainer.appendChild(btn);

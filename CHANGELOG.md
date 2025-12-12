@@ -5,6 +5,13 @@ All notable changes to Satorama will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-12-12
+### Fixed
+- Synthetic density slider now resets to 0 when loading a preset
+
+### Removed
+- Deleted obsolete `semver_prompt.md` (superseded by `/release` workflow)
+
 ## [1.1.0] - 2025-12-12
 ### Added
 - Interactive onboarding walkthrough for first-time users
