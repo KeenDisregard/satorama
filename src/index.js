@@ -28,26 +28,31 @@ document.addEventListener('DOMContentLoaded', () => {
   setupWalkthrough();
 });
 
-// Set up preset buttons
+// Set up constellation toggle buttons (formerly presets)
 function setupPresets(app) {
   const presetContainer = document.getElementById('preset-buttons');
   const presetDateDisplay = document.getElementById('preset-date');
 
   if (!presetContainer) return;
 
-  // Get available presets
+  // Get available presets (constellations)
   const presets = app.getAvailablePresets();
 
-  // Featured presets to show (limit to avoid overwhelming UI)
+  // Featured constellations to show
   const featured = ['iss', 'gps', 'brightest', 'starlink', 'weather', 'stations'];
 
-  // Create buttons for featured presets
+  // Store button references for active state management
+  const buttons = {};
+
+  // Create toggle buttons for featured constellations
   featured.forEach(presetId => {
     const preset = presets.find(p => p.id === presetId);
     if (!preset) return;
 
     const btn = document.createElement('button');
     btn.className = 'preset-btn';
+    btn.dataset.constellationId = presetId;
+    buttons[presetId] = btn;
 
     // Short display names
     const displayNames = {
@@ -65,14 +70,20 @@ function setupPresets(app) {
     `;
 
     btn.addEventListener('click', () => {
-      app.loadPreset(presetId);
+      // Toggle this constellation
+      const isNowActive = app.toggleConstellation(presetId);
 
-      // Reset synthetic density slider to 0 since presets replace synthetic satellites
-      const slider = document.getElementById('satellite-slider');
-      const sliderValue = document.getElementById('satellite-slider-value');
-      if (slider && sliderValue) {
-        slider.value = 0;
-        sliderValue.textContent = '0';
+      // Update button active state
+      btn.classList.toggle('active', isNowActive);
+
+      // Reset synthetic density slider when first constellation is loaded
+      if (isNowActive && app.loadedConstellations.size === 1) {
+        const slider = document.getElementById('satellite-slider');
+        const sliderValue = document.getElementById('satellite-slider-value');
+        if (slider && sliderValue) {
+          slider.value = 0;
+          sliderValue.textContent = '0';
+        }
       }
     });
 
@@ -86,6 +97,16 @@ function setupPresets(app) {
     presetDateDisplay.textContent = `DATA: ${date.toLocaleDateString()}`;
   } catch (e) {
     presetDateDisplay.textContent = '';
+  }
+
+  // Load GPS by default on startup (32 satellites - visually interesting)
+  try {
+    app.loadConstellation('gps');
+    if (buttons['gps']) {
+      buttons['gps'].classList.add('active');
+    }
+  } catch (e) {
+    console.warn('Could not load default constellation:', e);
   }
 }
 

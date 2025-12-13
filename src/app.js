@@ -82,6 +82,10 @@ class App {
     // High-performance satellite manager using InstancedMesh
     // Reduces draw calls from N to 1 for massive performance gains
     this.satelliteManager = null;
+
+    // Constellation toggle system - tracks which constellations are currently loaded
+    // Enables additive loading (GPS + Starlink + Weather all at once)
+    this.loadedConstellations = new Set();
   }
 
   init() {
@@ -269,64 +273,169 @@ class App {
    * Load a preset group of real satellites from the bundled catalog
    * @param {string} presetId - Preset ID (e.g., 'iss', 'gps', 'starlink')
    * @returns {boolean} Success status
+   * @deprecated Use toggleConstellation() instead for toggle behavior
    */
   loadPreset(presetId) {
-    try {
-      const tleData = loadPresetData(presetId);
+    // Legacy behavior: clear and load single preset
+    this.loadedConstellations.clear();
+    return this.loadConstellation(presetId);
+  }
 
+  /**
+   * Toggle a constellation on/off
+   * @param {string} constellationId - Constellation ID (e.g., 'gps', 'starlink')
+   * @returns {boolean} New state (true = loaded, false = unloaded)
+   */
+  toggleConstellation(constellationId) {
+    if (this.loadedConstellations.has(constellationId)) {
+      this.unloadConstellation(constellationId);
+      return false;
+    } else {
+      this.loadConstellation(constellationId);
+      return true;
+    }
+  }
+
+  /**
+   * Check if a constellation is currently loaded
+   * @param {string} constellationId
+   * @returns {boolean}
+   */
+  isConstellationLoaded(constellationId) {
+    return this.loadedConstellations.has(constellationId);
+  }
+
+  /**
+   * Load a constellation (additive - adds to existing satellites)
+   * @param {string} constellationId
+   * @returns {boolean} Success
+   */
+  loadConstellation(constellationId) {
+    try {
+      // Don't load if already loaded
+      if (this.loadedConstellations.has(constellationId)) {
+        console.log(`Constellation '${constellationId}' already loaded`);
+        return true;
+      }
+
+      const tleData = loadPresetData(constellationId);
       if (!tleData || tleData.length === 0) {
-        console.warn(`Preset '${presetId}' has no satellites`);
+        console.warn(`Constellation '${constellationId}' has no satellites`);
         return false;
       }
 
-      // Clear existing satellites
-      if (this.satelliteManager) {
-        this.satelliteManager.clear();
-      }
-      this.satellites = [];
+      // Tag each satellite with its constellation ID
+      tleData.forEach(sat => sat.constellationId = constellationId);
 
-      // Initialize the instanced mesh for this count
-      this.satelliteManager.initialize(tleData.length);
+      // Add to loaded set
+      this.loadedConstellations.add(constellationId);
 
-      // Create satellite objects from preset TLE data
-      for (let i = 0; i < tleData.length; i++) {
-        try {
-          const satrec = satellite.twoline2satrec(tleData[i].tle1, tleData[i].tle2);
+      // Rebuild all satellites from all loaded constellations
+      this._rebuildSatellites();
 
-          const mm = satrec.no;
-          const period = (2 * Math.PI) / mm;
-          const mmRadPerSec = mm / 60;
-          const mu = 398600.4418;
-          const a = Math.pow(mu / (mmRadPerSec * mmRadPerSec), 1 / 3);
-          const altitude = a - 6378.137;
-
-          const orbitParams = {
-            period: period,
-            inclination: satrec.inclo * 180 / Math.PI,
-            eccentricity: satrec.ecco,
-            altitude: altitude
-          };
-
-          const sat = this.satelliteManager.addSatellite(tleData[i], i, satrec, orbitParams);
-          this.satellites.push(sat);
-        } catch (e) {
-          console.warn(`Failed to create satellite ${i} from preset:`, e);
-        }
-      }
-
-      // Initialize SGP4 worker with new TLE data
-      this.initSGP4Worker(tleData);
-
-      // Update UI
-      document.getElementById('satellite-count').textContent = this.satellites.length;
-
-      console.log(`Loaded preset '${presetId}' with ${this.satellites.length} satellites`);
+      console.log(`Loaded constellation '${constellationId}' (${tleData.length} satellites). Total: ${this.satellites.length}`);
       return true;
 
     } catch (error) {
-      console.error(`Failed to load preset '${presetId}':`, error);
+      console.error(`Failed to load constellation '${constellationId}':`, error);
       return false;
     }
+  }
+
+  /**
+   * Unload a constellation (removes its satellites)
+   * @param {string} constellationId
+   * @returns {boolean} Success
+   */
+  unloadConstellation(constellationId) {
+    if (!this.loadedConstellations.has(constellationId)) {
+      console.log(`Constellation '${constellationId}' not loaded`);
+      return false;
+    }
+
+    // Remove from loaded set
+    this.loadedConstellations.delete(constellationId);
+
+    // Rebuild satellites without this constellation
+    this._rebuildSatellites();
+
+    console.log(`Unloaded constellation '${constellationId}'. Total: ${this.satellites.length}`);
+    return true;
+  }
+
+  /**
+   * Rebuild all satellites from currently loaded constellations
+   * @private
+   */
+  _rebuildSatellites() {
+    // Collect all TLE data from loaded constellations
+    const allTleData = [];
+    for (const constellationId of this.loadedConstellations) {
+      try {
+        const tleData = loadPresetData(constellationId);
+        if (tleData) {
+          tleData.forEach(sat => {
+            sat.constellationId = constellationId;
+            allTleData.push(sat);
+          });
+        }
+      } catch (e) {
+        console.warn(`Failed to load constellation '${constellationId}':`, e);
+      }
+    }
+
+    // Clear existing satellites
+    if (this.satelliteManager) {
+      this.satelliteManager.clear();
+    }
+    this.satellites = [];
+
+    // If no constellations loaded, just update UI and return
+    if (allTleData.length === 0) {
+      document.getElementById('satellite-count').textContent = '0';
+      // Stop worker since no satellites
+      if (this.sgp4Worker) {
+        this.sgp4Worker.postMessage({ type: 'stop' });
+      }
+      return;
+    }
+
+    // Initialize the instanced mesh for total count
+    this.satelliteManager.initialize(allTleData.length);
+
+    // Create satellite objects from combined TLE data
+    for (let i = 0; i < allTleData.length; i++) {
+      try {
+        const satrec = satellite.twoline2satrec(allTleData[i].tle1, allTleData[i].tle2);
+
+        const mm = satrec.no;
+        const period = (2 * Math.PI) / mm;
+        const mmRadPerSec = mm / 60;
+        const mu = 398600.4418;
+        const a = Math.pow(mu / (mmRadPerSec * mmRadPerSec), 1 / 3);
+        const altitude = a - 6378.137;
+
+        const orbitParams = {
+          period: period,
+          inclination: satrec.inclo * 180 / Math.PI,
+          eccentricity: satrec.ecco,
+          altitude: altitude
+        };
+
+        const sat = this.satelliteManager.addSatellite(allTleData[i], i, satrec, orbitParams);
+        // Store constellation ID on the satellite object for filtering
+        sat.constellationId = allTleData[i].constellationId;
+        this.satellites.push(sat);
+      } catch (e) {
+        console.warn(`Failed to create satellite ${i}:`, e);
+      }
+    }
+
+    // Initialize SGP4 worker with combined TLE data
+    this.initSGP4Worker(allTleData);
+
+    // Update UI
+    document.getElementById('satellite-count').textContent = this.satellites.length;
   }
 
   /**

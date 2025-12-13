@@ -644,6 +644,22 @@ body {
   color: var(--text-muted);
 }
 
+/* Active constellation state (toggle on) */
+.preset-btn.active {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: rgba(90, 159, 212, 0.2);
+  box-shadow: 0 0 8px rgba(90, 159, 212, 0.3);
+}
+
+.preset-btn.active .preset-count {
+  color: var(--accent-primary);
+}
+
+.preset-btn.active:hover {
+  background: rgba(90, 159, 212, 0.3);
+}
+
 .preset-btn.warning {
   border-color: rgba(255, 146, 43, 0.4);
 }

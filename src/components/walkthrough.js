@@ -50,8 +50,8 @@ class Walkthrough {
             },
             {
                 target: '#preset-buttons',
-                title: 'Load Presets',
-                description: 'Load curated satellite groups like ISS, GPS constellation, Starlink, or weather satellites.',
+                title: 'Constellations',
+                description: 'Toggle satellite groups on/off. GPS is loaded by default — try adding ISS, Starlink, or more!',
                 icon: 'collections_bookmark',
                 position: 'left'
             },
