@@ -1423,7 +1423,8 @@ body {
 }
 
 
-@media (max-width: 768px) and (orientation: portrait) {
+/* Use aspect-ratio instead of orientation for more reliable mobile detection */
+@media (max-width: 768px) and (max-aspect-ratio: 4/5) {
   .portrait-warning {
     display: flex;
   }
@@ -1534,15 +1535,17 @@ body {
 
 .walkthrough-spotlight {
   position: absolute;
-  border: 2px solid var(--accent-primary);
+  border: 3px solid var(--accent-primary);
   border-radius: 8px;
+  /* Use backdrop + clip-path approach for better mobile support */
+  background: transparent;
   box-shadow:
-    0 0 0 9999px rgba(0, 0, 0, 0.75),
     0 0 30px rgba(90, 159, 212, 0.5),
     inset 0 0 20px rgba(90, 159, 212, 0.2);
   pointer-events: none;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
+  z-index: 1;
 }
 
 .walkthrough-card {
@@ -1555,6 +1558,7 @@ body {
     0 20px 60px rgba(0, 0, 0, 0.5),
     0 0 40px rgba(90, 159, 212, 0.15);
   overflow: hidden;
+  z-index: 2;
   animation: walkthrough-card-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
