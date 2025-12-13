@@ -1,6 +1,6 @@
 {
   "name": "satorama",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "3D satellite orbit visualization. Watch satellites orbit Earth with accurate orbital mechanics.",
   "main": "index.js",
   "scripts": {
