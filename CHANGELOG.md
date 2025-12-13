@@ -5,6 +5,19 @@ All notable changes to Satorama will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-13
+### Added
+- Constellation toggle system: combine multiple satellite groups (GPS + ISS + Starlink)
+- Active state styling for constellation buttons (blue glow)
+- GPS constellation loads by default (32 satellites)
+
+### Changed
+- Renamed "Load Preset" to "Constellations" in UI
+- Updated walkthrough to explain toggle behavior
+
+### Fixed
+- Stations preset cleaned up (removed cargo vehicles and debris, now 5 modules)
+
 ## [1.1.2] - 2025-12-13
 ### Fixed
 - Portrait warning now uses `aspect-ratio` media query for more reliable mobile detection
