@@ -69,6 +69,11 @@ function setupPresets(app) {
       <span class="preset-count">${preset.count}</span>
     `;
 
+    // Set tooltip showing constellation description
+    if (preset.description) {
+      btn.title = preset.description;
+    }
+
     btn.addEventListener('click', () => {
       // Toggle this constellation
       const isNowActive = app.toggleConstellation(presetId);

@@ -10,13 +10,14 @@ import catalog from './tle-catalog.json';
 
 /**
  * Get list of available presets with metadata
- * @returns {Array<{id: string, name: string, count: number}>}
+ * @returns {Array<{id: string, name: string, count: number, description: string}>}
  */
 export function getPresetList() {
     return Object.entries(catalog.presets).map(([id, preset]) => ({
         id,
         name: preset.name,
-        count: preset.count
+        count: preset.count,
+        description: preset.description || ''
     }));
 }
 

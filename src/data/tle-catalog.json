@@ -5,6 +5,7 @@
   "presets": {
     "iss": {
       "name": "ISS (International Space Station)",
+      "description": "The largest modular space station in orbit. A joint project of NASA, Roscosmos, JAXA, ESA, and CSA.",
       "count": 1,
       "satellites": [
         {
@@ -16,6 +17,7 @@
     },
     "stations": {
       "name": "Space Stations",
+      "description": "Active crewed space stations: ISS and Chinese Space Station (Tiangong) modules.",
       "count": 5,
       "satellites": [
         {
@@ -47,6 +49,7 @@
     },
     "gps": {
       "name": "GPS Constellation",
+      "description": "US Global Positioning System. 32 satellites in MEO providing worldwide navigation.",
       "count": 32,
       "satellites": [
         {
@@ -520,6 +523,7 @@
     },
     "weather": {
       "name": "Weather Satellites",
+      "description": "Meteorological satellites from NOAA, ESA, JAXA, and other agencies monitoring Earth's weather.",
       "count": 70,
       "satellites": [
         {
@@ -876,6 +880,7 @@
     },
     "brightest": {
       "name": "100 Brightest",
+      "description": "Naked-eye visible satellites, ranked by brightness. Great for spotting passes!",
       "count": 100,
       "satellites": [
         {
@@ -1382,6 +1387,7 @@
     },
     "starlink": {
       "name": "Starlink",
+      "description": "SpaceX's satellite internet mega-constellation. 9,000+ satellites in LEO.",
       "count": 9121,
       "satellites": [
         {
