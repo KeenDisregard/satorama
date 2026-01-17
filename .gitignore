@@ -41,6 +41,8 @@ pids/
 coverage/
 html/
 .nyc_output/
+test-results/
+playwright-report/
 
 # Temp files
 tmp/

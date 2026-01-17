@@ -1,7 +1,7 @@
 # Outstanding Work
 
-> **Last Updated:** 2025-12-10  
-> **Status:** v1.1 shipped (25,000 satellites via Keplerian tier). Items below target v2.0.
+> **Last Updated:** 2026-01-17  
+> **Status:** v1.2.1 shipped (25,000 satellites via Keplerian tier). Items below target v2.0.
 
 ---
 

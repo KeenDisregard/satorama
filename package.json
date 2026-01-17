@@ -28,16 +28,16 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/KeenDisregard/satorama"
   },
   "dependencies": {
-    "satellite.js": "^5.0.0",
-    "three": "^0.174.0"
+    "satellite.js": "^6.0.2",
+    "three": "^0.182.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "jsdom": "^25.0.0",
     "vite": "^6.2.3",
-    "vitest": "^2.1.0"
+    "vitest": "^4.0.17"
   }
 }

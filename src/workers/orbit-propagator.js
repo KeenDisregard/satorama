@@ -152,7 +152,7 @@ function addSatellite(tleData, expectedIndex) {
   if (valid && newSatrec) {
     try {
       const positionAndVelocity = satellite.propagate(newSatrec, simulationTime);
-      if (positionAndVelocity.position && positionAndVelocity.velocity) {
+      if (positionAndVelocity && positionAndVelocity.position && positionAndVelocity.velocity) {
         const pos = positionAndVelocity.position;
         const vel = positionAndVelocity.velocity;
         positions[idx * 3] = pos.x;
@@ -198,7 +198,7 @@ function propagateAll(date) {
       if (i === sgp4PriorityIndex) {
         // Selected satellite: use full SGP4 for accuracy
         const positionAndVelocity = satellite.propagate(satrec, date);
-        if (positionAndVelocity.position && positionAndVelocity.velocity) {
+        if (positionAndVelocity && positionAndVelocity.position && positionAndVelocity.velocity) {
           pos = positionAndVelocity.position;
           vel = positionAndVelocity.velocity;
         }
@@ -210,7 +210,7 @@ function propagateAll(date) {
       } else {
         // Fallback to SGP4 if no elements (shouldn't happen)
         const positionAndVelocity = satellite.propagate(satrec, date);
-        if (positionAndVelocity.position && positionAndVelocity.velocity) {
+        if (positionAndVelocity && positionAndVelocity.position && positionAndVelocity.velocity) {
           pos = positionAndVelocity.position;
           vel = positionAndVelocity.velocity;
         }
