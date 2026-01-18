@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![JavaScript](https://img.shields.io/badge/language-JavaScript-yellow.svg)
-![Three.js](https://img.shields.io/badge/Three.js-v0.174-green.svg)
+![Three.js](https://img.shields.io/badge/Three.js-v0.182-green.svg)
 ![Vite](https://img.shields.io/badge/build-Vite-646CFF.svg)
 
 **Real-time 3D satellite orbit visualization.** Watch up to 1,000 satellites orbit Earth with accurate SGP4 orbital mechanics, all running smoothly in your browser.
@@ -225,7 +225,7 @@ npm run test:run      # Single run
 npm run test:coverage # With coverage report
 ```
 
-Tests cover `TimeController`, `CameraController`, and `SearchManager`. See [OUTSTANDING.md](OUTSTANDING.md) for planned domain logic coverage.
+Tests cover `TimeController`, `CameraController`, and `SearchManager`.
 
 ---
 
@@ -244,35 +244,44 @@ Tests cover `TimeController`, `CameraController`, and `SearchManager`. See [OUTS
 ## 📁 Project Structure
 
 ```
+├── public/
+│   └── assets/textures/       # Earth texture files (Blue Marble, clouds, etc.)
 ├── src/
 │   ├── components/
-│   │   ├── earth.js           # Earth globe with textures
-│   │   ├── satellite.js       # Satellite mesh & orbit lines
-│   │   ├── ground-station.js  # Ground station markers
-│   │   ├── line-of-sight.js   # Visibility calculations
-│   │   ├── satellite-trail.js # Selected satellite path trail
-│   │   ├── ground-track.js    # Ground projection of orbit
-│   │   ├── time-controller.js # Simulation time management
-│   │   ├── camera-controller.js # Camera follow & zoom
-│   │   └── search-manager.js  # Object search functionality
-│   ├── workers/
-│   │   └── sgp4-worker.js     # Web Worker for SGP4 propagation
+│   │   ├── camera-controller.js  # Camera follow & zoom
+│   │   ├── earth.js              # Earth globe with textures
+│   │   ├── ground-station.js     # Ground station markers
+│   │   ├── ground-track.js       # Ground projection of orbit
+│   │   ├── line-of-sight.js      # Visibility calculations
+│   │   ├── satellite-manager.js  # Satellite mesh batching & updates
+│   │   ├── satellite-trail.js    # Selected satellite path trail
+│   │   ├── satellite.js          # Satellite mesh & orbit lines
+│   │   ├── search-manager.js     # Object search functionality
+│   │   ├── time-controller.js    # Simulation time management
+│   │   ├── toast.js              # Toast notifications
+│   │   ├── tooltip.js            # Hover tooltips
+│   │   └── walkthrough.js        # Onboarding tutorial
 │   ├── data/
-│   │   └── tle-generator.js   # Synthetic TLE data generation
-│   ├── app.js                 # Main application class
-│   ├── index.js               # Entry point & UI bindings
-│   ├── utils.js               # Helper functions
-│   └── styles.css             # UI styling
-├── tests/                     # Unit tests
-├── assets/textures/           # Earth texture files
-└── index.html                 # Application shell
+│   │   ├── tle-catalog.json      # Full CelesTrak TLE catalog
+│   │   ├── tle-generator.js      # Synthetic TLE generation
+│   │   └── tle-presets.js        # Constellation presets
+│   ├── workers/
+│   │   ├── keplerian-propagator.js  # Fast two-body mechanics
+│   │   └── orbit-propagator.js      # Tiered SGP4/Keplerian worker
+│   ├── app.js                    # Main application class
+│   ├── index.js                  # Entry point & UI bindings
+│   ├── styles.css                # UI styling
+│   └── utils.js                  # Helper functions
+├── tests/                        # Unit tests
+└── index.html                    # Application shell
 ```
 
 ---
 
-## 🗺️ Outstanding Work
+## 🗺️ Roadmap
 
-See [OUTSTANDING.md](OUTSTANDING.md) for planned improvements including:
+Planned improvements include:
+- WebGPU compute shaders for 100k+ satellites
 - Domain logic test coverage
 - Real TLE data import (CelesTrak/Space-Track)
 - Orbit visualization enhancements
